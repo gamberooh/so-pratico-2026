@@ -1,0 +1,16 @@
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ gcc -o modif= modif=.c
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ touch test1 test2
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ ./modif= test1
+Case: one file
+Same mtime:
+./test1
+./test2
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ ./modif= test1 test2
+Same mtime
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ touch test3 ~/Desktop/test4
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ ./modif= test3 ~/Desktop
+Case: two files
+Same mtime:
+/home/gamberooh/Desktop/test4
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20260112$ 
+

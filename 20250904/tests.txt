@@ -1,0 +1,18 @@
+ls -la
+total 20
+drwxr-xr-x. 1 gamberooh gamberooh    50 Jun 15 11:32 .
+drwxr-xr-x. 1 gamberooh gamberooh    48 Jun 14 20:26 ..
+drwxr-xr-x. 1 gamberooh gamberooh   160 Jun 15 11:33 .sha1
+-rwxr-xr-x. 1 gamberooh gamberooh 13920 Jun 15 11:32 sha1index
+-rw-r--r--. 1 gamberooh gamberooh  2937 Jun 15 11:32 sha1index.c
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20250904$ cd .sha1/
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20250904/.sha1$ ls
+6588126f1867b56401c8b3226ea9f3f9611d53db  c2e82a47559932a7210f01101eb4a192eb09723f
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20250904/.sha1$ cd ..
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20250904$ sha1sum 
+.sha1/       sha1index    sha1index.c  
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20250904$ sha1sum sha1index
+c2e82a47559932a7210f01101eb4a192eb09723f  sha1index
+gamberooh@kakatua:~/Documents/solez/pratica/prove/20250904$ sha1sum sha1index.c
+6588126f1867b56401c8b3226ea9f3f9611d53db  sha1index.c
+
