@@ -21,7 +21,8 @@ comandi separati da una riga vuota.
 Es:
 /bin/ls
 ls
-/rmp
+/tmp
+
 /bin/cat
 cat
 /etc/hostname
@@ -46,9 +47,6 @@ void exec_process(char* executable, char** program) {
 }
 
 void process_task_file(char* filepath) {
-
-	// Aprire il file e leggere il contenuto (eseguibile + argomenti)
-	// Suggerimento: usa fopen/getline per leggere le righe comodamente
 	int fd = open(filepath, O_RDONLY);
 	if (fd < 0) {
 		perror("open");
@@ -70,9 +68,27 @@ void process_task_file(char* filepath) {
 	char** args = NULL;
 
 	while ((read_bytes = getline(&line, &len, file_stream)) != -1) {
-
 		if (read_bytes > 0 && line[read_bytes - 1] == '\n') {
 			line[read_bytes - 1] = '\0'; 
+		}
+
+		// Se la riga è vuota, termina il comando corrente ed eseguilo
+		if (line[0] == '\0') {
+			if (line_number > 0) {
+				char **temp = realloc(args, (line_number + 1) * sizeof(char*));
+				if (temp) {
+					args = temp;
+					args[line_number] = NULL;
+					exec_process(args[0], &args[1]);
+				}
+				for (int i = 0; i < line_number; i++) {
+					free(args[i]);
+				}
+				free(args);
+				args = NULL;
+				line_number = 0;
+			}
+			continue;
 		}
 
 		char **temp = realloc(args, (line_number + 1) * sizeof(char*));
@@ -84,11 +100,10 @@ void process_task_file(char* filepath) {
 		args[line_number++] = strdup(line);
 	}
 
+	// Esegue l'ultimo comando se il file non terminava con una riga vuota
 	if (line_number > 0) {
 		char **temp = realloc(args, (line_number + 1) * sizeof(char*));
-		if (temp == NULL) {
-			perror("realloc");
-		} else {
+		if (temp) {
 			args = temp;
 			args[line_number] = NULL;
 			exec_process(args[0], &args[1]);
@@ -98,16 +113,15 @@ void process_task_file(char* filepath) {
 		}
 		free(args);
 	}
+
 	free(line);
 	fclose(file_stream);
 }
 
-
-void inotirun(char* D) {
-	
+void inotimrun(char* D) {
 	DIR* dir = opendir(D);
 
-	if(!dir) {
+	if (!dir) {
 		if (mkdir(D, 0755) < 0) {
 			perror("mkdir");
 			exit(EXIT_FAILURE);
@@ -122,6 +136,7 @@ void inotirun(char* D) {
 		perror("inotify_init");
 		exit(EXIT_FAILURE);
 	}
+
 	// Rimango in attesa della fine della creazione del file.
 	int intfy_watch = inotify_add_watch(intfy_fd, D, IN_CLOSE_WRITE);
 	if (intfy_watch < 0) {
@@ -131,45 +146,37 @@ void inotirun(char* D) {
 
 	char buf[EVENT_BUF_LEN] __attribute__ ((aligned(__alignof__(struct inotify_event))));
 	int valid = 1;
-	while(valid) {
+	while (valid) {
 		int len = read(intfy_fd, buf, EVENT_BUF_LEN);
 		if (len < 0) {
 			perror("read");
 			valid = 0;
+			break;
 		}
 
 		int i = 0;
-        while (i < len) {
-            struct inotify_event *event = (struct inotify_event *) &buf[i];
-            
-            // Verifichiamo che ci sia un nome file e che sia un file regolare (non sottodirectory)
-            if (event->len && !(event->mask & IN_ISDIR)) {
-                
-                // Costruire il path completo del file creato (dirname + "/" + event->name)
-                char filepath[MAXPATH];
-                snprintf(filepath, sizeof(filepath), "%s/%s", D, event->name);
+		while (i < len) {
+			struct inotify_event *event = (struct inotify_event *) &buf[i];
+			
+			// Verifichiamo che ci sia un nome file e che sia un file regolare (non sottodirectory)
+			if (event->len && !(event->mask & IN_ISDIR)) {
+				char filepath[MAXPATH];
+				snprintf(filepath, sizeof(filepath), "%s/%s", D, event->name);
 
 				process_task_file(filepath);
-                // effettuare la fork()
-                // - Nel figlio: ricostruire l'array argv[] ed eseguire execv()
-                // - Nel padre: fare wait() per attendere la fine del figlio
 				unlink(filepath);
-                
-                // Cancellare il file con unlink(filepath)
-            }
-            i += sizeof(struct inotify_event) + event->len;
-        }
+			}
+			i += sizeof(struct inotify_event) + event->len;
+		}
 	}
 	close(intfy_fd);
-
 }
 
 int main(int argc, char* argv[]) {
 	if (argc == 2) {
-		inotirun(argv[1]);
+		inotimrun(argv[1]);
 	} else {
 		printf("usage %s <dirname>\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 }
-
