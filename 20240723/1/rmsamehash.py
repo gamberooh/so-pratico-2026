@@ -43,7 +43,7 @@ def rmsamesha(dir1, dir2):
     map1 = find_and_hash_files(dir1)
     map2 = find_and_hash_files(dir2)
 
-    common_hashes = set(map1) & set(map2)
+    common_hashes = set(map1.keys()) & set(map2.keys())
 
     for digest in common_hashes:
         for file_path in map1[digest] + map2[digest]:
